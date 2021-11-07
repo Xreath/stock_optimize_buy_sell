@@ -4,7 +4,26 @@ import numpy as np
 import sys
 import os
 import matplotlib.pyplot as plt
-from datetime import date
+from datetime import date,datetime
+
+
+def Convert_Data_For_TRY(data, data1):
+    a = datetime.now().replace(microsecond=0)
+    df = pd.DataFrame()
+    for col_r in range(0, len(data.columns) - 1):
+        clm = data.columns[col_r]
+        if(clm!="Date"):
+            for i, (j, k) in enumerate(zip(data[clm].values, data1[clm].values)):
+                değer = j * k
+                değer = round(değer, 3)
+                df.loc[i,clm] = değer
+        else:
+            df[clm] = data[clm]
+
+    b = datetime.now().replace(microsecond=0)
+    print(b - a)
+    return df
+
 
 
 def reverse_data(data):
@@ -14,7 +33,7 @@ def reverse_data(data):
 
 
 def get_prices(data, number=1303):
-    Array = data.loc[:number, ["Price"]].values
+    Array = data.loc[:number-1, ["Price"]].values
     list1 = Array.tolist()
     liste = []
     for i in list1:
@@ -26,11 +45,10 @@ def Change_Type_XAU_USD(data):
     for col_r in range(1, len(data.columns) - 1):
         clm = data.columns[col_r]
         for k, i in enumerate(data[clm]):
-            indexing = i.find('.')
-            i = i[:indexing]
+            m=i.find(",")
+            i=i[0:m]+i[m+1:len(i)]
             data.loc[k,clm] = i
 
-        data[clm] = [i.replace(",", ".") for i in data[clm]]
         data[clm] = data[clm].astype('float')
 
 
@@ -47,6 +65,13 @@ def clear_date(d0, d1):
     if (d1[1][0] != "0"):
         d1[1] = d1[1].strip(",")
     return d0, d1
+
+
+def Get_Necessary_Data():
+
+
+    pass
+
 
 
 def stockBuySell(price, n, money, data, data_path):
@@ -89,9 +114,10 @@ def stockBuySell(price, n, money, data, data_path):
 
         kar_yüzde = ((price[sell] - price[buy]) / price[buy]) * 100
         ana_paradan_kar = (money * kar_yüzde) / 100
-        komisyon = money / 500
+        komisyon_buy = money / 500
+        komisyon_sell=(money+ana_paradan_kar)/500
+        komisyon=komisyon_buy+komisyon_sell
 
-        #profit_sum += ana_paradan_kar
 
         if (ana_paradan_kar > komisyon):
             Date_Buy = data.loc[buy, ["Date"]].iat[0]
@@ -109,7 +135,7 @@ def stockBuySell(price, n, money, data, data_path):
             delta = d1 - d0
             total_days += delta.days
             print("Kar yüzdesi",kar_yüzde) #silinecek bu burada kalmasın !!!!!!!!!!!!!!!!!!!!!!
-            print(f"******************** Total {parity_name} Days: {total_days} ********************")
+            print(f"                Total {parity_name} Days: {total_days}          ")
 
 
 
@@ -119,7 +145,7 @@ if __name__=="__main__":
     df = pd.read_csv(path)
     df = reverse_data(df)
 
-    liste = get_prices(df, 200)
+    liste = get_prices(df, 1300)
     if (path.split(" ")[0] == "USD_TRY"):
         Main_Money = 1e5
     else:
