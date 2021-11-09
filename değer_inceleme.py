@@ -25,10 +25,10 @@ EUR_TRY=Convert_TRY.EUR_TRY
 GBP_TRY=Convert_TRY.GBP_TRY
 XAU_TRY=Convert_TRY.XAU_TRY
 
-XAU_TRY_FR=XAU_TRY.loc[:20-1,["Date","Price"]]
-EUR_TRY_FR=EUR_TRY.loc[:20-1,["Date","Price"]]
-GBP_TRY_FR=GBP_TRY.loc[:20-1,["Date","Price"]]
-USD_TRY_FR=USD_TRY.loc[:20-1,["Date","Price"]]
+XAU_TRY_FR=XAU_TRY.loc[:15-1,["Date","Price"]]
+EUR_TRY_FR=EUR_TRY.loc[:15-1,["Date","Price"]]
+GBP_TRY_FR=GBP_TRY.loc[:15-1,["Date","Price"]]
+USD_TRY_FR=USD_TRY.loc[:15-1,["Date","Price"]]
 
 
 frames = [XAU_TRY_FR,EUR_TRY_FR,GBP_TRY_FR, USD_TRY_FR]
