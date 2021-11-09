@@ -5,6 +5,8 @@ import pandas as pd
 import Convert_TRY
 pd.options.mode.chained_assignment = None  # default='warn'
 
+dict_of_select=Trade_Strategy.dict_of_select
+
 #Convert TRY
 XAU_TRY=Convert_TRY.XAU_TRY
 EUR_TRY=Convert_TRY.EUR_TRY
@@ -13,12 +15,11 @@ GBP_TRY=Convert_TRY.GBP_TRY
 path = "USD_TRY Historical Data.csv"
 USD_TRY = pd.read_csv(path)
 USD_TRY = Trade_Strategy.reverse_data(USD_TRY)
-
-
-liste1 = Trade_Strategy.get_prices(XAU_TRY, 35)
-liste2 = Trade_Strategy.get_prices(EUR_TRY, 35)
-liste3 = Trade_Strategy.get_prices(GBP_TRY, 35)
-liste4 = Trade_Strategy.get_prices(USD_TRY, 35)
+TDNO=int(input("Lütfen işlem Yapmak istediğiniz toplam data sayısını girin(max 1305):"))
+liste1 = Trade_Strategy.get_prices(XAU_TRY, TDNO)
+liste2 = Trade_Strategy.get_prices(EUR_TRY, TDNO)
+liste3 = Trade_Strategy.get_prices(GBP_TRY, TDNO)
+liste4 = Trade_Strategy.get_prices(USD_TRY, TDNO)
 
 
 data=[liste1,liste2,liste3,liste4]
@@ -48,6 +49,32 @@ for i in range(len(liste_trade_number_sifirla)):
   liste_trade_number_sifirla[i].Trade_Number=A[i]
 Total_Data=pd.concat(liste_trade_number_sifirla,axis=0)
 Total_Data.to_excel("excel_after_select1.xlsx")
-dict_of_select=Trade_Strategy.select_and_create_dict(Trade_Strategy.dict_of_select,Total_Data,2,buy_day=1)
+#last step
+takip_edilen_path_indexleri=[]
+Finish=False
+selection_count=2
+column = Total_Data["Sell_on_day"]
+max_Sell_on_day = column.max()
+Trade_Strategy.change_type(Total_Data)
 
+while(Finish==False):
+  index_max_prft=Trade_Strategy.find_max_profit_in_selection_index(Total_Data,dict_of_select)# en karlı olanın indexini buluyor
+  takip_edilen_path_indexleri.append(index_max_prft)
+  value_sell_on_day_index=Total_Data.loc[index_max_prft,"Sell_on_day"] #burada en karlı gelen seçimin satım gününü buluyrouz
+  onumde_baslangic_kaldimi=Total_Data.loc[Total_Data["Buy_on_day"]>value_sell_on_day_index].values
+  Empty = False
+  if onumde_baslangic_kaldimi.size == 0:
+      Empty = True
+  if(Empty ==True):
+    Finish=True
+  else:
+    value_sell_on_day_index+=1
+    dict_of_select=Trade_Strategy.select_and_create_dict(dict_of_select,Total_Data,selection_count,buy_day=value_sell_on_day_index)
+    selection_count+=1
 
+print(dict_of_select)
+print("***********************")
+Path_Of_Trade_DF=Total_Data.loc[takip_edilen_path_indexleri,["Parity","Buy_on_day","Sell_on_day","Profit_in_Trade"]]
+Path_Of_Trade_DF.reset_index(drop=True,inplace=True)
+Path_Of_Trade_DF.to_csv("Path_Of_Trade_DF.csv")
+print(Path_Of_Trade_DF.info())

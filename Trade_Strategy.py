@@ -8,6 +8,104 @@ from datetime import date,datetime
 parity_to_number_dict = {"XAU_TRY": 1, "EUR_TRY": 2, "GBP_TRY": 3, "USD_TRY": 4}
 number_to_parity_dict = {1:"XAU_TRY", 2 :"EUR_TRY", 3:"GBP_TRY", 4:"USD_TRY"}
 dict_of_select={'Select_1': {1: 0, 2: 0, 3: 0, 4: 0}}
+Months = {"Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6, "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10,
+          "Nov": 11, "Dec": 12}
+
+def find_max_profit_in_selection_index(data, dictionary):
+    max_val_index_list = []
+    els = list(dictionary.values())
+    els = els[-1]
+    maximum_profit = 0
+    if (len(els) > 1):
+        for j in els.items():
+            kar = data.loc[
+                (data["Trade_Number"] == j[1]) & (data["Parity"] == number_to_parity_dict.get(j[0]))]["Profit_in_Trade"].values
+            if (kar > maximum_profit):
+                maximum_profit = kar[0]
+            else:
+                pass
+        max_val_index = data.index.values[data['Profit_in_Trade'] == maximum_profit][0]
+        max_val_index_list.append(max_val_index)
+    else:
+        deger = list(els.items())
+        kar = data.loc[(data["Trade_Number"] == deger[0][1]) & (data["Parity"] == number_to_parity_dict.get(deger[0][0]))]["Profit_in_Trade"].values
+        max_val_index = data.index.values[data['Profit_in_Trade'] == kar[0]][0]
+        max_val_index_list.append(max_val_index)
+
+    return max_val_index_list[0]
+
+def change_type(df):
+    df["Buy_on_day"] = df["Buy_on_day"].astype("int")
+    df["Sell_on_day"] = df["Sell_on_day"].astype("int")
+    df["Profit_in_Trade"] = df["Profit_in_Trade"].astype("float")
+
+def select_and_create_dict(dict_slct, df, number_of_selection, buy_day):
+    str_value = "Select" + "_" + str(number_of_selection)
+    dict_wll_selected = {}
+    val_hala = []
+    parity_finder_list = []
+    while(len(val_hala)==0):
+        for j in parity_to_number_dict.keys():
+            try:
+                val = df.loc[(df["Buy_on_day"] == buy_day) & (df["Parity"] == j)]["Trade_Number"].values[0]  # trade number as a parity
+                parity_finder_list.append(j)
+                val_hala.append(val)
+            except IndexError:
+                pass
+                # full_val_check = False
+                # Buy_on_day_count = buy_day - 1
+                # while (full_val_check != True):
+                #     Buy_on_day_count += 1
+                #     val = df.loc[(df["Buy_on_day"] == Buy_on_day_count) & (df["Parity"] == j)]["Trade_Number"].values
+                #     if (val.size != 0):
+                #         full_val_check = True
+                #         parity_finder_list.append(j)
+                #         val_hala.append(val[0])
+                #     if (Buy_on_day_count == max_Sell_on_day):
+                #         break
+        if(len(val_hala)==0):
+            buy_day+=1
+
+
+    for i in range(0, len(val_hala)):
+        dict_wll_selected[parity_to_number_dict.get(parity_finder_list[i])] = val_hala[i]
+
+    dict_slct[str_value] = dict_wll_selected
+    return dict_slct
+
+
+def Select_High_Profit_Same_Day(data, indexes):
+    for i in indexes:
+        maxim = 0
+        for j in i:
+            if (data["Profit_in_Trade"][j] > maxim):
+                maxim = data["Profit_in_Trade"][j]
+            else:
+                pass
+        max_val_index = data.index.values[data['Profit_in_Trade'] == maxim][0]
+        max_val_list_index = i.index(max_val_index)
+
+        # print(i, max_val_index)
+        for elem in i:
+            if (elem != max_val_index):
+                data.drop(elem, inplace=True)
+            else:
+                pass
+
+
+def Reset_Trade_Number_And_Index(data):
+    data.reset_index(drop=True, inplace=True)
+    data['Trade_Number'] = data['Trade_Number'].astype("int")
+    liste_trade_number_sifirla = []
+    A = []
+    for i in parity_to_number_dict.keys():
+        liste_trade_number_sifirla.append(data.loc[(data["Parity"] == i)])
+
+    for sayi, j in enumerate(liste_trade_number_sifirla):
+        count = liste_trade_number_sifirla[sayi].count()[3]
+        A.append(list(range(0, count)))
+
+    return A, liste_trade_number_sifirla
 
 
 def Repeat(data):
@@ -27,68 +125,15 @@ def Repeat(data):
     return repeated
 
 
-def Reset_Trade_Number_And_Index(data):
-  data.reset_index(drop=True,inplace=True)
-  data['Trade_Number']=data['Trade_Number'].astype("int")
-  liste_trade_number_sifirla=[]
-  A=[]
-  for i in parity_to_number_dict.keys():
-    liste_trade_number_sifirla.append(data.loc[(data["Parity"] ==i)])
-
-  for sayi,j in enumerate(liste_trade_number_sifirla):
-    count=liste_trade_number_sifirla[sayi].count()[3]
-    A.append(list(range(0,count)))
-
-  return A,liste_trade_number_sifirla
-
-
-
-def select_and_create_dict(dict_slct,df,number_of_selection,buy_day):
-    df["Buy_on_day"]=df["Buy_on_day"].astype("int")
-    df["Sell_on_day"]=df["Sell_on_day"].astype("int")
-    str_value="Select"+"_"+str(number_of_selection)
-    dict_ll_selected={}
-    idx=df[df["Buy_on_day"] == buy_day].index # same buy day in parity
-    for i in idx:
-        print(i)
-        val_hala=[]
-        for j in parity_to_number_dict.keys():
-          try:
-            val=df.loc[(df["Buy_on_day"] == buy_day) & (df["Parity"] == j)]["Trade_Number"].values[0] #trade number this parity
-            val_hala.append(val)
-          except IndexError:
-            pass
-        dict_ll_selected[parity_to_number_dict.get(df["Parity"][i])]=val_hala[0]
-    dict_slct[str_value]=dict_ll_selected
-    return dict_slct
-
-
-
-def Select_High_Profit_Same_Day(data, indexes):
-    for i in indexes:
-        maxim = 0
-        for j in i:
-            if (data["Profit_in_Trade"][j] > maxim):
-                maxim = data["Profit_in_Trade"][j]
-            else:
-                pass
-        max_val_index = data.index.values[data['Profit_in_Trade'] == maxim][0]
-
-        for elem in i:
-            if (elem != max_val_index):
-                data.drop(elem, inplace=True)
-            else:
-                pass
-
-
 def Find_same_trade_index(data):
-    same_trade_index=[]
-    Days = data.iloc[:,2:4]
-    Days=Days.astype("int")
-    boolean=Days.duplicated(keep='last')
-    days_value=Days[boolean].values
+    same_trade_index = []
+    Days = data.iloc[:, 2:4]
+    Days = Days.astype("int")
+    boolean = Days.duplicated(keep='last')
+    days_value = Days[boolean].values
     for i in days_value:
-      same_trade_index.append(Days[(Days["Buy_on_day"]==i[0])  & (Days["Sell_on_day"]==i[1])].index.values.astype(int))
+        same_trade_index.append(
+            Days[(Days["Buy_on_day"] == i[0]) & (Days["Sell_on_day"] == i[1])].index.values.astype(int))
 
     SAM1 = []
     for i in same_trade_index:
@@ -109,15 +154,14 @@ def Convert_Data_For_TRY(data, data1):
     df = pd.DataFrame()
     for col_r in range(0, len(data.columns) - 1):
         clm = data.columns[col_r]
-        if(clm!="Date"):
+        if (clm != "Date"):
             for i, (j, k) in enumerate(zip(data[clm].values, data1[clm].values)):
                 değer = j * k
                 değer = round(değer, 3)
-                df.loc[i,clm] = değer
+                df.loc[i, clm] = değer
         else:
             df[clm] = data[clm]
     return df
-
 
 
 def reverse_data(data):
@@ -126,8 +170,8 @@ def reverse_data(data):
     return data
 
 
-def get_prices(data, number=1303):
-    Array = data.loc[:number-1, ["Price"]].values
+def get_prices(data, number):
+    Array = data.loc[:number - 1, ["Price"]].values
     list1 = Array.tolist()
     liste = []
     for i in list1:
@@ -139,9 +183,9 @@ def Change_Type_XAU_USD(data):
     for col_r in range(1, len(data.columns) - 1):
         clm = data.columns[col_r]
         for k, i in enumerate(data[clm]):
-            m=i.find(",")
-            i=i[0:m]+i[m+1:len(i)]
-            data.loc[k,clm] = i
+            m = i.find(",")
+            i = i[0:m] + i[m + 1:len(i)]
+            data.loc[k, clm] = i
 
         data[clm] = data[clm].astype('float')
 
@@ -161,58 +205,52 @@ def clear_date(d0, d1):
     return d0, d1
 
 
-def stockBuySell(price, n, money, data, Data_Name):
-    Months = {"Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6, "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10,
-              "Nov": 11, "Dec": 12}
+def Get_Necessary_Data():
+    pass
 
-    data_frame=pd.DataFrame(columns=["Trade_Number","Parity","Buy_on_day","Sell_on_day","Profit_amount_with_fee","Total_money","Profit_in_Trade"])
+
+def stockBuySell(price, n, money, data, Data_Name):
+    data_frame = pd.DataFrame(
+        columns=["Trade_Number", "Parity", "Buy_on_day", "Sell_on_day", "Profit_amount_with_fee", "Total_money",
+                 "Profit_in_Trade"])
     profit_sum = 0
     total_days = 0
-    index=0
-    #parity_name = data_path.split(" ")[0]
+    index = 0
+    # parity_name = data_path.split(" ")[0]
     # if(parity_name=="USD_TRY"):
     #     parity_sym="₺"
     # else:
     #     parity_sym = "$"
 
-    # Prices must be given for at least two days
     if (n == 1):
         return
-    # Traverse through given price array
     i = 0
     while (i < (n - 1)):
-        # Find Local Minima
-        # Note that the limit is (n-2) as we are
-        # comparing present element to the next element
+
         while ((i < (n - 1)) and
                (price[i + 1] <= price[i])):
             i += 1
-        # If we reached the end, break
-        # as no further solution possible
+
         if (i == n - 1):
             break
         # Store the index of minima
         buy = i
         i += 1
-        # Find Local Maxima
-        # Note that the limit is (n-1) as we are
-        # comparing to previous element
+
         while ((i < n) and (price[i] >= price[i - 1])):
             i += 1
-        # Store the index of maxima
         sell = i - 1
 
         kar_yüzde = ((price[sell] - price[buy]) / price[buy]) * 100
         ana_paradan_kar = (money * kar_yüzde) / 100
         komisyon_buy = money / 500
-        komisyon_sell=(money+ana_paradan_kar)/500
-        komisyon=komisyon_buy+komisyon_sell
+        komisyon_sell = (money + ana_paradan_kar) / 500
+        komisyon = komisyon_buy + komisyon_sell
 
-
-        if (ana_paradan_kar > komisyon):
+        if ((ana_paradan_kar > komisyon)):
             Date_Buy = data.loc[buy, ["Date"]].iat[0]
             Date_Sell = data.loc[sell, ["Date"]].iat[0]
-            print("Buy on day: ", Date_Buy, "\t", "Sell on day: ",Date_Sell)
+            print("Buy on day: ", Date_Buy, "\t", "Sell on day: ", Date_Sell)
             money += ana_paradan_kar - komisyon
             print(f"Profit amount with fee:{int(ana_paradan_kar - komisyon)}Tl   Total money:{int(money)}Tl")
             d0 = Date_Buy.strip().split()
@@ -224,20 +262,19 @@ def stockBuySell(price, n, money, data, Data_Name):
             d1 = date(int(d1[2]), Months.get(d1[0]), int(d1[1]))
             delta = d1 - d0
             total_days += delta.days
-            print("Kar yüzdesi",kar_yüzde) #silinecek bu burada kalmasın !!!!!!!!!!!!!!!!!!!!!!
+            print("Kar yüzdesi", kar_yüzde)  # silinecek bu burada kalmasın !!!!!!!!!!!!!!!!!!!!!!
             print(f"                Total {Data_Name} Days: {total_days}          ")
 
-            data_frame.loc[index,["Trade_Number"]]=index
-            data_frame.loc[index,["Parity"]]=Data_Name
-            data_frame.loc[index,["Buy_on_day"]]=buy
-            data_frame.loc[index,["Sell_on_day"]]=sell
-            data_frame.loc[index,["Profit_amount_with_fee"]]=int(ana_paradan_kar - komisyon)
-            data_frame.loc[index,["Total_money"]]=int(money)
-            data_frame.loc[index,["Profit_in_Trade"]]=round(kar_yüzde,4)
-            index+=1
+            data_frame.loc[index, ["Trade_Number"]] = index
+            data_frame.loc[index, ["Parity"]] = Data_Name
+            data_frame.loc[index, ["Buy_on_day"]] = buy
+            data_frame.loc[index, ["Sell_on_day"]] = sell
+            data_frame.loc[index, ["Profit_amount_with_fee"]] = int(ana_paradan_kar - komisyon)
+            data_frame.loc[index, ["Total_money"]] = int(money)
+            data_frame.loc[index, ["Profit_in_Trade"]] = round(kar_yüzde, 5)
+            index += 1
 
-    #data_frame.set_index('Trade_Number')
-
+    # data_frame.set_index('Trade_Number')
     return data_frame
 
 
