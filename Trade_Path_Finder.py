@@ -1,8 +1,8 @@
-from pyparsing import Token
 
 import Trade_Strategy
 import pandas as pd
 import Convert_TRY
+
 pd.options.mode.chained_assignment = None  # default='warn'
 
 dict_of_select=Trade_Strategy.dict_of_select
@@ -11,6 +11,8 @@ dict_of_select=Trade_Strategy.dict_of_select
 XAU_TRY=Convert_TRY.XAU_TRY
 EUR_TRY=Convert_TRY.EUR_TRY
 GBP_TRY=Convert_TRY.GBP_TRY
+
+Data_Days_Index=XAU_TRY["Date"]
 
 path = "USD_TRY Historical Data.csv"
 USD_TRY = pd.read_csv(path)
@@ -38,17 +40,17 @@ for i,k,j in zip(data,data1,data_name):
 Total_Data=pd.concat(Dataframe_Listesi)
 
 Total_Data = Total_Data.reset_index(drop=True)
-Total_Data.to_excel("excel.xlsx")
+Total_Data.to_excel("Seçim Datları/excel.xlsx")
 SAM=Trade_Strategy.Find_same_trade_index(Total_Data)
 Trade_Strategy.Select_High_Profit_Same_Day(Total_Data,SAM)
 Total_Data.reset_index(drop=True,inplace=True)
-Total_Data.to_excel("excel_after_select.xlsx")
+Total_Data.to_excel("Seçim Datları/excel_after_select_v1.xlsx")
 #Reset Trade Index and Index
 A,liste_trade_number_sifirla=Trade_Strategy.Reset_Trade_Number_And_Index(Total_Data)
 for i in range(len(liste_trade_number_sifirla)):
   liste_trade_number_sifirla[i].Trade_Number=A[i]
 Total_Data=pd.concat(liste_trade_number_sifirla,axis=0)
-Total_Data.to_excel("excel_after_select1.xlsx")
+Total_Data.to_excel("Seçim Datları/excel_after_select_v2.xlsx")
 #last step
 takip_edilen_path_indexleri=[]
 Finish=False
@@ -71,10 +73,10 @@ while(Finish==False):
     value_sell_on_day_index+=1
     dict_of_select=Trade_Strategy.select_and_create_dict(dict_of_select,Total_Data,selection_count,buy_day=value_sell_on_day_index)
     selection_count+=1
-
+print("Paths that can be chosen in each choice")
 print(dict_of_select)
-print("***********************")
+print("*******************************************************************************************")
 Path_Of_Trade_DF=Total_Data.loc[takip_edilen_path_indexleri,["Parity","Buy_on_day","Sell_on_day","Profit_in_Trade"]]
 Path_Of_Trade_DF.reset_index(drop=True,inplace=True)
-Path_Of_Trade_DF.to_csv("Path_Of_Trade_DF.csv")
-print(Path_Of_Trade_DF.info())
+Path_Of_Trade_DF.to_csv("Sonuç Dataları/Path_Of_Trade_DF.csv")
+
